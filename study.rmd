@@ -1,0 +1,30 @@
+---
+title: "MPG Comparisons between Manual and Automatic Transmissions"
+author: "J.E. Turcotte"
+date: "May 17, 2016"
+output: pdf_document
+---
+
+```{r loading and labelling the data, message=F, warning=F, echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+
+set.seed(7041)
+```
+
+## Synopsis
+
+## Examining the Data
+
+## Assumptions
+
+## Null Hypthothesis ($H_{0}$)
+
+## Alternative Hypothesis ($H_{a}$)
+
+## Conclusion
+
+## Source
+C.I. Bliss (1952) *The Statistics of Bioassay.* Academic Press: http://krishikosh.egranth.ac.in/bitstream/1/22993/1/IVRI%20OB%202003.pdf (page 500)
+
+## Appendix
