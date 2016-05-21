@@ -2,21 +2,36 @@
 title: "MPG Comparisons between Manual and Automatic Transmissions"
 author: "J.E. Turcotte"
 date: "May 17, 2016"
-output: pdf_document
+output: 
+  pdf_document: 
+    keep_tex: yes
+    latex_engine: xelatex
 ---
 
 ```{r loading and labelling the data, message=F, warning=F, echo=FALSE}
 library(ggplot2)
 library(gridExtra)
+library(knitr)
 
 set.seed(7041)
 ```
 
-## Synopsis
+## Executive Summary
+
+In this brief study, we must explore the effect that automatic versus manual transmissions has over miles-per-gallon fuel efficiency among a sample group of 1974 model automobiles.
+
+## Assumptions
+
+* The field 'qsec' (or, from a stop, how many seconds it took for the vehicle to reach a quarter mile's distance) is likely a function of the car's power; i.e., a result, like miles per gallon, of the vehicle's configuration rather than a potential confounding cause OF miles per gallon.  For that reason, I'm excluding it in any modelling of miles per gallon per vehicle.
+* Given the yes-or-no nature of whether or not a car is manufactured with or without automatic transmission, this data has been categorized, so named within the data, and is likely to be modelled using binomial logistic regression.
 
 ## Examining the Data
 
-## Assumptions
+Looking at *Figure 1*, we get a very quick sense of what the data that we ahve to work with looks like.  Given that not all these columns (already exlcuding 'vs' and 'qsec') are easily read or in quite the right format, the first step I've taken here is to rename the columns and change the transmission data to a named factor.
+
+Following this, *Figure 2* gives us a brief summarization of the better-named data that remains, excluding a few extra columns for brevity.
+
+A very simple binomial logistic regression line drawn purely comparing miles per gallon (MPG) to whether (1) or not (0) a car had a manual transition, there does APPEAR to be a strong differentiation, BUT... we've yet to examine any other details of these cars.
 
 ## Null Hypthothesis ($H_{0}$)
 
@@ -25,6 +40,29 @@ set.seed(7041)
 ## Conclusion
 
 ## Source
-C.I. Bliss (1952) *The Statistics of Bioassay.* Academic Press: http://krishikosh.egranth.ac.in/bitstream/1/22993/1/IVRI%20OB%202003.pdf (page 500)
+Henderson and Velleman (1981), *Building multiple regression models interactively*. Biometrics, 37, 391–411.
 
 ## Appendix
+```{r modifying the data for comprehensibility, echo=FALSE}
+cars <- mtcars
+colnames(cars) <- c('MPG','cylinders','displacement','horsepower','rear axle ratio','tons','quarter mile','vs','manual','gears','carburetors')
+cars$tons <- cars$tons / 2;
+```
+### Figure 1 - Some of the data
+```{r first look at the data, eval=TRUE, echo=FALSE}
+kable(head(mtcars[,!names(mtcars) %in% c('vs','qsec')]))
+```
+
+### Figure 2 - Summary of data after retitling
+```{r studying the data, eval=TRUE, echo=FALSE}
+kable(summary(cars[,c('MPG','cylinders','horsepower','tons','manual')]))
+```
+
+### Figure 3 - A simple bionomial regression
+```{r simple binomial fit, eval=TRUE, echo=FALSE, fig.width=4, fig.height=3}
+simple <- ggplot(cars,aes(MPG,manual))
+simple <- simple + geom_point()
+simple <- simple + stat_smooth(method="glm", method.args=list(family="binomial"), se=F)
+simple + labs(x="Miles per Gallon", y="Manual Transmission")
+```
+
