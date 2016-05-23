@@ -10,20 +10,21 @@ output:
 
 ```{r loading and labelling the data, message=F, warning=F, echo=FALSE}
 library(ggplot2)
+library(grid)
 library(gridExtra)
 library(knitr)
-
-set.seed(7041)
+library(pander)
+library(car)
 ```
 
 ## Executive Summary
 
-In this brief study, we must explore the effect that automatic versus manual transmissions has over miles-per-gallon fuel efficiency among a sample group of 1974 model automobiles.
+In this brief study, we must explore the effect that automatic versus manual transmissions has over miles-per-gallon fuel efficiency among a sample group of 1974 model automobiles.  First we looked at the data itself, in brief.  This we followed up with a simple examination of miles per gallon as predicted by transmission type, but included indicators that suggested that the real factors might be elsewhere.  Following this, we fit a simple model and compare it to a multivariate model that included measured for transmission type, holding cylinders, horsepower and weight converted constant.  For further illustration, we view each regressor separately.
 
 ## Assumptions
-
 * The field 'qsec' (or, from a stop, how many seconds it took for the vehicle to reach a quarter mile's distance) is likely a function of the car's power; i.e., a result, like miles per gallon, of the vehicle's configuration rather than a potential confounding cause OF miles per gallon.  For that reason, I'm excluding it in any modelling of miles per gallon per vehicle.
 * Given the yes-or-no nature of whether or not a car is manufactured with or without automatic transmission, this data has been categorized, so named within the data, and is likely to be modelled using binomial logistic regression.
+* This study assumes that the engine power of each given vehicle proportional to the vehicle's weight.  Rather, that the mass of the vehicle requires a matching size engine, and that a bigger engine will also contribute to the weight of the vehicle.  Thus, a disproportionately designed vehicle might show up as an outlier.
 
 ## Examining the Data
 
@@ -31,16 +32,32 @@ Looking at *Figure 1*, we get a very quick sense of what the data that we ahve t
 
 Following this, *Figure 2* gives us a brief summarization of the better-named data that remains, excluding a few extra columns for brevity.
 
-A very simple binomial logistic regression line drawn purely comparing miles per gallon (MPG) to whether (1) or not (0) a car had a manual transition, there does APPEAR to be a strong differentiation, BUT... we've yet to examine any other details of these cars.
+A very simple *Figure 3* binomial logistic regression line drawn purely comparing miles per gallon (MPG) to whether (1) or not (0) a car had a manual transition, there does APPEAR to be a strong differentiation, BUT... we've yet to examine any other details of these cars.  Further, giving the data points characteristics (size in tonnage and color, re: number of cylinders), the subpatterning suggests that either or both are significant factors... rather, that they are consistent with the same curve that we might have assigned to choice of transmission alone.
 
-## Null Hypthothesis ($H_{0}$)
+Comparing coefficients between a simple and strict linear regression, in *Figure 4* between Miles per Gallon (MPG) and whether or not any given car is a manual transmission versus a wider net cast, in *Figure 5* with several other regressors (being manual transmission, cylinders, horsepower, and tonnage (converted from the original measure of half-tons)), it becomes rather apparent that the use of transmission is not the prevailing factor.
+\newpage
 
-## Alternative Hypothesis ($H_{a}$)
+## Hypthotheses ($H_{0}$ v. $H_{a}$)
+
+Given the linear regression:
+$$Y = 1 + \beta^{tr}_{i}X_{i} + \beta^{cyl}_{i}X_{i} + \beta^{wt}_{i}X_{i} + \epsilon_{i}$$
+...This paper shall **assume** that the choice of transmission is not a significantly deterministic factor in a vehicle's miles-per-gallon.  Rather, in $H_{0}$, that $\beta^{tr} < \beta^{wt} + \beta^{cyl}$ rather than in $H_{a}$ where $\beta^{tr} >= \beta^{wt} + \beta^{cyl}$.
 
 ## Conclusion
 
+Notice that when considering only the type of transmission, we appear to gain about 7.25 miles per gallon by going with a manual, but when regressing for number of cylinders, 0.75mpg is removed per cylinder added there, along with an insignificant subtraction for horsepower, and a huge dectractor of over 5.2 miles per gallon per added ton in weight, leaving merely an approximate **1.48 miles per gallon difference** for our choice in transmission, with a standard error nearly as large.
+
+Isolating for transmission, number of cylinders, and overall vehicle tonnage, we see in *Figures 6, 7, and 8*, verification that the positive slope toward a manual transmission is dwarved by the negative slopes of the first and third most impactful regressors, being the vehicle's weight in tons and the number of cylinders invovled.
+
+Given our probability value of **~0.31**, having regressed for the other equivalent significant factors, this study **fails to reject the null hypothesis** that the choice of transmission makes any more than than a slight difference in fuel economy.  Certainly nothing compared to the choice in vehicle weight.
+
+## Caveat
+
+While this study does appear to have suggested a small but otherwise statistically insignificant increase to fuel efficiency between automatic and manual transmissions, this is not reliable information insofar as the data provides no single model of car with both transmission types.  In the mid-70s, perhaps, a model had a transmission type, and not the choice in the matter that we have today, but because we do not know if automatic transmissions are not **heavier** than manual transmissions, it may well be that the possible weight lost in choosing a manual transmission might be completely explained by the regression in fuel economy given a vehicle's overall mass.
+
 ## Source
 Henderson and Velleman (1981), *Building multiple regression models interactively*. Biometrics, 37, 391–411.
+\newpage
 
 ## Appendix
 ```{r modifying the data for comprehensibility, echo=FALSE}
@@ -50,19 +67,56 @@ cars$tons <- cars$tons / 2;
 ```
 ### Figure 1 - Some of the data
 ```{r first look at the data, eval=TRUE, echo=FALSE}
-kable(head(mtcars[,!names(mtcars) %in% c('vs','qsec')]))
+pander(head(mtcars[,!names(mtcars) %in% c('vs','qsec')]))
 ```
 
 ### Figure 2 - Summary of data after retitling
 ```{r studying the data, eval=TRUE, echo=FALSE}
-kable(summary(cars[,c('MPG','cylinders','horsepower','tons','manual')]))
+pander(summary(cars[,c('MPG','cylinders','horsepower','tons','manual')]))
 ```
 
 ### Figure 3 - A simple bionomial regression
-```{r simple binomial fit, eval=TRUE, echo=FALSE, fig.width=4, fig.height=3}
+```{r simple binomial fit, eval=TRUE, echo=FALSE, fig.width=9, fig.height=3}
 simple <- ggplot(cars,aes(MPG,manual))
-simple <- simple + geom_point()
+simple <- simple + geom_point(aes(col=as.factor(cylinders), size=tons), alpha=0.5)
 simple <- simple + stat_smooth(method="glm", method.args=list(family="binomial"), se=F)
 simple + labs(x="Miles per Gallon", y="Manual Transmission")
 ```
+\newpage
 
+### Figures 4 - Simple Linear Model
+```{r simple linear model, eval=TRUE, echo=FALSE}
+sfit <- lm(MPG ~ manual, cars)
+pander(coef(summary(sfit)))
+```
+This regression suggests that your typical automatic will average about 17.15 miles per gallon, with your average manual transmission vehicle will clock it at over 24 miles per gallon.  But...
+
+### Figure 5 - Multivariate Linear Model
+```{r multivariate model, eval=TRUE, echo=FALSE}
+mfit <- lm(MPG ~ manual + cylinders + horsepower + I(tons - mean(tons)), cars)
+pander(coef(summary(mfit)))
+```
+Instead, shifting our intercept to that of the average weight vehicle, and regressive for cylinders, horsepower, and tonnage, we get a completely different picture, showing that after other factors are consider, very little detectable increase based on transmission alone remains.
+
+### Figures 6, 7, 8 - Individaulized Residual Plots
+```{r plot the residuals of transmission, eval=TRUE, echo=FALSE, fig.width=9, fig.height=5}
+
+grid_arrange_shared_legend <- function(...) {
+    plots <- list(...)
+    g <- ggplotGrob(plots[[1]] + theme(legend.position="bottom"))$grobs
+    legend <- g[[which(sapply(g, function(x) x$name) == "guide-box")]]
+    lheight <- sum(legend$height)
+    grid.arrange(
+        do.call(arrangeGrob, lapply(plots, function(x)
+            x + theme(legend.position="none"))),
+        legend,
+        ncol = 1,
+        heights = unit.c(unit(1, "npc") - lheight, lheight))
+}
+
+mtm <- ggplot(cars, aes(y=MPG, x=manual)) + geom_point(aes(size=tons, color=cylinders), alpha=.4) + geom_smooth(method=lm)
+mtc <- ggplot(cars, aes(y=MPG, x=cylinders)) + geom_point(aes(size=tons, color=cylinders), alpha=.4) + geom_smooth(method=lm)
+mtw <- ggplot(cars, aes(y=MPG, x=tons)) + geom_point(aes(size=tons, color=cylinders), alpha=.4) + geom_smooth(method=lm)
+
+grid_arrange_shared_legend(mtm,mtc,mtw)
+```
